@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "bun --watch src/index.js",
-    "start": "bun src/index.js"
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dependencies": {
     "cloudinary": "^2.11.0",

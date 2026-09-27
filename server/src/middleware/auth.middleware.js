@@ -9,6 +9,26 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const COOKIE_NAME = "admin_token";
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
+/**
+ * Cookie policy.
+ *
+ * Once both apps are deployed they live on *different sites* (Vercel for the
+ * client, Render for the API), and a `SameSite=Strict` cookie is never sent on
+ * those cross-site admin requests - the session would look like it had
+ * vanished on every page load. "none" is what makes it travel, and browsers
+ * only accept it together with `Secure`.
+ *
+ * In development both run on http://localhost, which counts as a single site,
+ * so "lax" is enough there and avoids the HTTPS requirement. COOKIE_SAME_SITE
+ * overrides the choice for any deployment that needs something else.
+ */
+const SAME_SITE =
+  process.env.COOKIE_SAME_SITE || (IS_PRODUCTION ? "none" : "lax");
+
+/** "none" is only honoured over HTTPS, so it forces Secure on. */
+const SECURE = SAME_SITE === "none" ? true : IS_PRODUCTION;
 
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET is not set in .env");
@@ -18,8 +38,9 @@ if (!JWT_SECRET) {
  * Sets the admin session cookie.
  *
  * httpOnly  - not readable from JavaScript
- * sameSite  - "strict" blocks the cookie on cross-site requests (CSRF)
- * secure    - HTTPS only, enabled automatically in production
+ * sameSite  - see the policy above; "none" in production because the client and
+ *             the API are served from different sites
+ * secure    - HTTPS only, always on when sameSite is "none"
  * maxAge    - derived from the token's own `exp` so the cookie and the token
  *             can never expire at different times
  */
@@ -28,16 +49,20 @@ export function setAuthCookie(res, token) {
 
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
-    sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
+    sameSite: SAME_SITE,
+    secure: SECURE,
     maxAge: exp * 1000 - Date.now(),
     path: "/",
   });
 }
 
-/** Removes the session cookie. */
+/** Removes the session cookie, using the same attributes it was set with. */
 export function clearAuthCookie(res) {
-  res.clearCookie(COOKIE_NAME, { path: "/" });
+  res.clearCookie(COOKIE_NAME, {
+    path: "/",
+    sameSite: SAME_SITE,
+    secure: SECURE,
+  });
 }
 
 /**

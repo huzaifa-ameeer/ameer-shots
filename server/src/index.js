@@ -18,9 +18,16 @@ const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
 /**
+ * Render (and Vercel, and any other reverse proxy) terminates TLS and forwards
+ * the real protocol in `X-Forwarded-Proto`. Trusting one hop makes Express
+ * agree with the outside world about `req.protocol` / `req.secure`.
+ */
+app.set("trust proxy", 1);
+
+/**
  * CORS.
  *
- * The client is a separate Next.js app on a different port, so the browser
+ * The client is a separate Next.js app on a different site, so the browser
  * treats its requests as cross-origin.
  *
  * `credentials: true` is required for the admin session cookie to travel, and
@@ -33,19 +40,40 @@ const allowedOrigins = (process.env.CLIENT_ORIGIN || "")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+/**
+ * Origin check.
+ *
+ * A plain entry has to match exactly. An entry written as `*.vercel.app`
+ * matches any subdomain of that host, which is what makes Vercel's per-deploy
+ * preview URLs usable without listing each one - the deployer still decides
+ * which hosts are allowed, and a host such as `evil.vercel.app.attacker.com`
+ * is rejected because the part in front of the suffix contains a dot.
+ */
+function isAllowedOrigin(origin) {
+  return allowedOrigins.some((allowed) => {
+    if (allowed === origin) return true;
+    if (!allowed.startsWith("*.")) return false;
+
+    const suffix = allowed.slice(1);
+    if (!origin.endsWith(suffix)) return false;
+
+    return !origin.slice(0, -suffix.length).includes(".");
+  });
+}
+
 app.use(
   cors({
     origin(origin, callback) {
       // No Origin header: same-origin request or a tool like curl/Postman.
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (isAllowedOrigin(origin)) return callback(null, true);
 
       const error = new Error(`Origin ${origin} is not allowed by CORS`);
       error.status = 403;
       return callback(error);
     },
     credentials: true,
-  })
+  }),
 );
 
 /**
@@ -88,6 +116,7 @@ app.use((req, res) => {
  *
  * connectDb() is awaited first: if Mongo is unreachable we exit(1) instead of
  * starting a server that would fail every request with a buffering timeout.
+ * Render injects PORT, so the service listens on whatever port it was given.
  */
 try {
   await connectDb();
