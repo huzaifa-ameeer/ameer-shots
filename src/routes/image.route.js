@@ -7,6 +7,7 @@ import {
   updateImage,
   deleteImage,
 } from "../controllers/image.controller.js";
+import { requireAdmin } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
@@ -23,9 +24,9 @@ const upload = multer({
 
 router.get("/", getImages);
 router.get("/:id", getImageById);
-router.patch("/:id", updateImage);
-router.delete("/:id", deleteImage);
-router.post("/", upload.single("image"), createImage);
+router.patch("/:id", requireAdmin, updateImage);
+router.delete("/:id", requireAdmin, deleteImage);
+router.post("/", requireAdmin, upload.single("image"), createImage);
 
 router.use((err, req, res, next) => {
   if (err) {
