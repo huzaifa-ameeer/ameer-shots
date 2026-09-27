@@ -16,13 +16,22 @@ export const metadata: Metadata = {
   description: "A gallery of photographs by Ameer",
 };
 
+/**
+ * Applies the stored theme (or the system preference on a first visit) before
+ * the browser paints, so the page never flashes the wrong one.
+ */
+const themeScript = `(function(){try{var s=localStorage.getItem("theme");var d=s?s==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.classList.toggle("dark",d);}catch(e){}})();`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    // The script below edits the class on <html>, hence the suppression.
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${spaceGrotesk.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <Navbar />
         {children}
 
