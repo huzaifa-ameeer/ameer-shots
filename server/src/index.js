@@ -8,6 +8,7 @@
  *     traffic while the database is unreachable
  */
 import express from "express";
+import cors from "cors";
 import cookieParser from "cookie-parser";
 import { connectDb } from "./config/db.js";
 import imageRoutes from "./routes/image.route.js";
@@ -15,6 +16,37 @@ import authRoutes from "./routes/auth.route.js";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
+
+/**
+ * CORS.
+ *
+ * The client is a separate Next.js app on a different port, so the browser
+ * treats its requests as cross-origin.
+ *
+ * `credentials: true` is required for the admin session cookie to travel, and
+ * that in turn means the origin cannot be the "*" wildcard - browsers reject
+ * wildcard origins on credentialed requests. Each allowed origin is therefore
+ * echoed back explicitly, taken from CLIENT_ORIGIN.
+ */
+const allowedOrigins = (process.env.CLIENT_ORIGIN || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // No Origin header: same-origin request or a tool like curl/Postman.
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      const error = new Error(`Origin ${origin} is not allowed by CORS`);
+      error.status = 403;
+      return callback(error);
+    },
+    credentials: true,
+  })
+);
 
 /**
  * Global middleware.

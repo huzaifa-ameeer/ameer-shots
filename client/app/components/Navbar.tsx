@@ -28,6 +28,7 @@ export default function Navbar() {
   // mobile panel so the two can never drift apart.
   const links = [
     { label: "Home", href: "/" },
+    { label: "Gallery", href: "/gallery" },
     { label: "About", href: "https://huzaifa-lake.vercel.app", external: true },
   ];
 
