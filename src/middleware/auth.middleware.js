@@ -1,3 +1,10 @@
+/**
+ * Admin authentication middleware and JWT helpers.
+ *
+ * The session token is delivered as an httpOnly cookie rather than being
+ * returned in the response body, so page scripts cannot read it and it is
+ * not exposed to XSS.
+ */
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -7,6 +14,15 @@ if (!JWT_SECRET) {
   throw new Error("JWT_SECRET is not set in .env");
 }
 
+/**
+ * Sets the admin session cookie.
+ *
+ * httpOnly  - not readable from JavaScript
+ * sameSite  - "strict" blocks the cookie on cross-site requests (CSRF)
+ * secure    - HTTPS only, enabled automatically in production
+ * maxAge    - derived from the token's own `exp` so the cookie and the token
+ *             can never expire at different times
+ */
 export function setAuthCookie(res, token) {
   const { exp } = jwt.decode(token);
 
@@ -19,16 +35,30 @@ export function setAuthCookie(res, token) {
   });
 }
 
+/** Removes the session cookie. */
 export function clearAuthCookie(res) {
   res.clearCookie(COOKIE_NAME, { path: "/" });
 }
 
+/**
+ * Creates a signed JWT for the given admin.
+ *
+ * @param {{ email: string }} admin
+ * @returns {string} signed token
+ */
 export function signToken(admin) {
   return jwt.sign({ email: admin.email, role: "admin" }, JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || "7d",
   });
 }
 
+/**
+ * Route guard: allows the request through only for a valid admin session.
+ *
+ * Responds 401 when the cookie is missing, invalid or expired, and 403 when
+ * the token is valid but lacks the admin role. On success it attaches the
+ * decoded payload as req.admin.
+ */
 export function requireAdmin(req, res, next) {
   const token = req.cookies?.[COOKIE_NAME];
 
