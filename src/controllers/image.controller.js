@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { uploadImage } from "../config/cloudinary.js";
 import { Image } from "../models/image.model.js";
 
@@ -46,5 +47,26 @@ export async function getImages(req, res) {
   } catch (error) {
     console.error("Failed to fetch images:", error.message);
     return res.status(500).json({ error: "Failed to fetch images" });
+  }
+}
+
+export async function getImageById(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ error: "Invalid image id" });
+    }
+
+    const image = await Image.findById(id).lean();
+
+    if (!image) {
+      return res.status(404).json({ error: "Image not found" });
+    }
+
+    return res.json(image);
+  } catch (error) {
+    console.error("Failed to fetch image:", error.message);
+    return res.status(500).json({ error: "Failed to fetch image" });
   }
 }
