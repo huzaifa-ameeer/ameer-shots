@@ -29,3 +29,22 @@ export async function createImage(req, res) {
     return res.status(500).json({ error: "Failed to create image" });
   }
 }
+
+export async function getImages(req, res) {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 0, 100) || 0;
+    const page = Math.max(Number(req.query.page) || 1, 1);
+
+    const query = Image.find().sort({ createdAt: -1 }).lean();
+
+    if (limit > 0) query.skip((page - 1) * limit).limit(limit);
+
+    const images = await query;
+    const total = await Image.countDocuments();
+
+    return res.json({ total, page, images });
+  } catch (error) {
+    console.error("Failed to fetch images:", error.message);
+    return res.status(500).json({ error: "Failed to fetch images" });
+  }
+}

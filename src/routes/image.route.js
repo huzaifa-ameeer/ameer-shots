@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import { createImage } from "../controllers/image.controller.js";
+import { createImage, getImages } from "../controllers/image.controller.js";
 
 const router = Router();
 
@@ -15,6 +15,7 @@ const upload = multer({
   },
 });
 
+router.get("/", getImages);
 router.post("/", upload.single("image"), createImage);
 
 router.use((err, req, res, next) => {
