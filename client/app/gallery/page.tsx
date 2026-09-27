@@ -1,12 +1,26 @@
+import { Suspense } from "react";
+import GallerySkeleton from "../components/GallerySkeleton";
 import ImageCard from "../components/ImageCard";
 import { fetchImages } from "../lib/api";
 
 export const metadata = {
-  title: "Gallery · AmeerShots",
   description: "Every shot from AmeerShots",
 };
 
-export default async function GalleryPage() {
+/**
+ * The request is awaited inside a child component so the skeleton is bound to
+ * this page only. A loading.tsx file in this segment would also wrap
+ * /gallery/[id], showing the grid on the way to a single photo.
+ */
+export default function GalleryPage() {
+  return (
+    <Suspense fallback={<GallerySkeleton />}>
+      <GalleryContent />
+    </Suspense>
+  );
+}
+
+async function GalleryContent() {
   let images: Awaited<ReturnType<typeof fetchImages>>;
 
   try {

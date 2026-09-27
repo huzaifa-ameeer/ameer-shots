@@ -44,3 +44,26 @@ export async function fetchImages(): Promise<ImagesResponse> {
 
   return res.json();
 }
+
+/**
+ * Fetches one image by its Mongo id.
+ *
+ * A missing image (404) and a malformed id (400) both resolve to `null` so the
+ * caller can render the not-found UI - neither is a server fault. Every other
+ * failure throws, matching fetchImages.
+ */
+export async function fetchImageById(id: string): Promise<ImageItem | null> {
+  const res = await fetch(`${API_URL}/api/images/${encodeURIComponent(id)}`, {
+    cache: "no-store",
+  });
+
+  if (res.status === 400 || res.status === 404) {
+    return null;
+  }
+
+  if (!res.ok) {
+    throw new Error(`Failed to load image (${res.status})`);
+  }
+
+  return res.json();
+}

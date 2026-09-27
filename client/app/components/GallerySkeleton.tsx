@@ -1,7 +1,11 @@
 /**
- * Skeleton shown while the gallery request is in flight.
+ * Placeholder grid for the gallery.
+ *
+ * Rendered from inside the gallery page's own <Suspense> boundary rather than
+ * from a loading.tsx file: a segment-level loading file wraps every nested
+ * route as well, which made the detail page flash this grid on navigation.
  */
-export default function GalleryLoading() {
+export default function GallerySkeleton() {
   return (
     <section className="mx-auto w-full max-w-7xl flex-1 px-6 py-16 sm:px-10 lg:px-16">
       <div className="mb-10">
