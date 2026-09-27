@@ -9,6 +9,7 @@ import {
   signToken,
   setAuthCookie,
   clearAuthCookie,
+  readAdminSession,
 } from "../middleware/auth.middleware.js";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
@@ -74,4 +75,25 @@ export async function adminLogin(req, res) {
 export function adminLogout(req, res) {
   clearAuthCookie(res);
   return res.json({ message: "Logged out" });
+}
+
+/**
+ * GET /api/auth/me
+ *
+ * Reports whether the request carries a valid admin session. The client calls
+ * this to decide between showing the login form and the dashboard, because the
+ * session cookie is httpOnly and therefore invisible to browser scripts.
+ *
+ * @returns 200 { email, role }
+ * @returns 401 no cookie, or an invalid/expired token
+ */
+export function adminSession(req, res) {
+  const session = readAdminSession(req);
+
+  if (!session.ok) {
+    return res.status(session.status).json({ error: session.error });
+  }
+
+  // Only the non-sensitive claims: the client has no use for the rest.
+  return res.json({ email: session.admin.email, role: session.admin.role });
 }

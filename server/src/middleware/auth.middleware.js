@@ -53,6 +53,37 @@ export function signToken(admin) {
 }
 
 /**
+ * Reads and verifies the admin session cookie.
+ *
+ * The single place that knows how a session is represented, so the route guard
+ * below and the controller's "is anyone signed in" endpoint cannot drift apart.
+ *
+ * @param {import("express").Request} req
+ * @returns {{ ok: true, admin: object } | { ok: false, status: number, error: string }}
+ *   `status` is the HTTP code the caller should answer with: 401 when the
+ *   cookie is missing, invalid or expired, 403 when it lacks the admin role.
+ */
+export function readAdminSession(req) {
+  const token = req.cookies?.[COOKIE_NAME];
+
+  if (!token) {
+    return { ok: false, status: 401, error: "Admin authentication required" };
+  }
+
+  try {
+    const admin = jwt.verify(token, JWT_SECRET);
+
+    if (admin.role !== "admin") {
+      return { ok: false, status: 403, error: "Admin access only" };
+    }
+
+    return { ok: true, admin };
+  } catch {
+    return { ok: false, status: 401, error: "Invalid or expired token" };
+  }
+}
+
+/**
  * Route guard: allows the request through only for a valid admin session.
  *
  * Responds 401 when the cookie is missing, invalid or expired, and 403 when
@@ -60,21 +91,12 @@ export function signToken(admin) {
  * decoded payload as req.admin.
  */
 export function requireAdmin(req, res, next) {
-  const token = req.cookies?.[COOKIE_NAME];
+  const session = readAdminSession(req);
 
-  if (!token) {
-    return res.status(401).json({ error: "Admin authentication required" });
+  if (!session.ok) {
+    return res.status(session.status).json({ error: session.error });
   }
 
-  try {
-    req.admin = jwt.verify(token, JWT_SECRET);
-
-    if (req.admin.role !== "admin") {
-      return res.status(403).json({ error: "Admin access only" });
-    }
-
-    return next();
-  } catch {
-    return res.status(401).json({ error: "Invalid or expired token" });
-  }
+  req.admin = session.admin;
+  return next();
 }
