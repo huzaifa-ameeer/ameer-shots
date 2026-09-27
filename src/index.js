@@ -1,5 +1,6 @@
 import express from "express";
 import { connectDb } from "./config/db.js";
+import imageRoutes from "./routes/image.route.js";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -13,6 +14,8 @@ app.get("/", (req, res) => {
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
+
+app.use("/api/images", imageRoutes);
 
 try {
   await connectDb();

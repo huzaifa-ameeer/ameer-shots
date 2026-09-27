@@ -8,7 +8,9 @@
     "start": "bun src/index.js"
   },
   "dependencies": {
+    "cloudinary": "^2.11.0",
     "express": "^5.2.1",
-    "mongoose": "8"
+    "mongoose": "8",
+    "multer": "^2.4.0"
   }
 }
