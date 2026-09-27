@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import ThemeToggle from "./ThemeToggle";
 
 /**
  * Site-wide navigation bar.
@@ -47,41 +48,50 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop navigation */}
-        <nav className="hidden items-center gap-8 md:flex">
-          {links.map((link) =>
-            link.external ? (
-              <a
-                key={link.label}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
-              >
-                {link.label}
-              </a>
-            ) : (
-              <Link
-                key={link.label}
-                href={link.href}
-                className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
-              >
-                {link.label}
-              </Link>
-            ),
-          )}
-        </nav>
+        {/*
+          Right-hand group: the links, the light/dark switch and the hamburger
+          share one row and one gap, so the switch sits after "About" on desktop
+          and right before the hamburger on small screens.
+        */}
+        <div className="flex items-center gap-4 md:gap-8">
+          {/* Desktop navigation */}
+          <nav className="hidden items-center gap-8 md:flex">
+            {links.map((link) =>
+              link.external ? (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+                >
+                  {link.label}
+                </Link>
+              ),
+            )}
+          </nav>
 
-        {/* Hamburger / cross toggle, small screens only */}
-        <button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          aria-expanded={open}
-          aria-label={open ? "Close menu" : "Open menu"}
-          className="-mr-2 inline-flex h-10 w-10 items-center justify-center rounded-md text-neutral-700 transition-colors hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800 md:hidden"
-        >
-          {open ? <CloseIcon /> : <MenuIcon />}
-        </button>
+          <ThemeToggle />
+
+          {/* Hamburger / cross toggle, small screens only */}
+          <button
+            type="button"
+            onClick={() => setOpen((value) => !value)}
+            aria-expanded={open}
+            aria-label={open ? "Close menu" : "Open menu"}
+            className="-mr-2 inline-flex h-10 w-10 items-center justify-center rounded-md text-neutral-700 transition-colors hover:bg-neutral-100 focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:outline-none dark:text-neutral-300 dark:hover:bg-neutral-800 md:hidden"
+          >
+            {open ? <CloseIcon /> : <MenuIcon />}
+          </button>
+        </div>
       </div>
 
       {/*
