@@ -8,6 +8,7 @@
     "start": "bun src/index.js"
   },
   "dependencies": {
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "mongoose": "8"
   }
 }

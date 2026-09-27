@@ -1,4 +1,5 @@
 import express from "express";
+import { connectDb } from "./config/db.js";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -13,10 +14,12 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-app.use((req, res) => {
-  res.status(404).json({ error: "Not Found" });
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+try {
+  await connectDb();
+  app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+  });
+} catch (err) {
+  console.error("Failed to start server:", err.message);
+  process.exit(1);
+}
