@@ -8,6 +8,13 @@ export const metadata = {
 };
 
 /**
+ * The API is a separate service that can be asleep when this request arrives -
+ * on Render's free plan a cold start takes tens of seconds - so the route needs
+ * a generous execution budget rather than the platform default.
+ */
+export const maxDuration = 60;
+
+/**
  * The request is awaited inside a child component so the skeleton is bound to
  * this page only. A loading.tsx file in this segment would also wrap
  * /gallery/[id], showing the grid on the way to a single photo.
@@ -25,17 +32,21 @@ async function GalleryContent() {
 
   try {
     images = await fetchImages();
-  } catch {
+  } catch (error) {
     // Rendered inside the page rather than bubbling to error.tsx, so the
-    // navbar stays usable and the user can retry.
+    // navbar stays usable and the user can retry. The reason from fetchImages
+    // is shown verbatim: a wrong API URL and a failing API need different fixes.
     return (
       <section className="flex flex-1 flex-col items-center justify-center px-6 py-32 text-center sm:px-10 lg:px-16">
         <h1 className="text-2xl font-bold tracking-tight">
           Could not load the gallery
         </h1>
         <p className="mt-2 max-w-md text-sm text-neutral-600 dark:text-neutral-400">
-          The API did not respond. Make sure the server is running on port
-          4000, then refresh this page.
+          {error instanceof Error ? error.message : "The API did not respond."}
+        </p>
+        <p className="mt-1 max-w-md text-sm text-neutral-600 dark:text-neutral-400">
+          Check that the Express API is running and that the client points at
+          it, then refresh this page.
         </p>
       </section>
     );

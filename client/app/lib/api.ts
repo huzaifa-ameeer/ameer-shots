@@ -6,8 +6,16 @@
  * need the CORS headers the server now sends.
  */
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+/**
+ * Base URL of the Express API, shared with the browser-side admin client.
+ *
+ * Trailing slashes are stripped here so a value like
+ * "https://ameershots.onrender.com/" cannot turn every request into a
+ * "//api/images" path, which the server answers with a 404.
+ */
+export const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+).replace(/\/+$/, "");
 
 /** Shape of a gallery image as returned by GET /api/images. */
 export type ImageItem = {
@@ -30,16 +38,25 @@ export type ImagesResponse = {
  * Fetches the image list.
  *
  * Throws if the API is unreachable so the nearest error boundary can take
- * over instead of rendering a half-built page.
+ * over instead of rendering a half-built page. The message distinguishes
+ * "could not reach the API at <url>" (wrong NEXT_PUBLIC_API_URL, service down)
+ * from "answered <status>" (up, but failing), because those need very
+ * different fixes.
  */
 export async function fetchImages(): Promise<ImagesResponse> {
-  const res = await fetch(`${API_URL}/api/images`, {
-    // Always read fresh data; the gallery changes whenever the admin uploads.
-    cache: "no-store",
-  });
+  let res: Response;
+
+  try {
+    res = await fetch(`${API_URL}/api/images`, {
+      // Always read fresh data; the gallery changes whenever the admin uploads.
+      cache: "no-store",
+    });
+  } catch {
+    throw new Error(`Could not reach the gallery API at ${API_URL}`);
+  }
 
   if (!res.ok) {
-    throw new Error(`Failed to load images (${res.status})`);
+    throw new Error(`The gallery API answered ${res.status}`);
   }
 
   return res.json();

@@ -10,10 +10,7 @@
  * API's host. That is why the session is checked from here rather than read
  * from a Server Component.
  */
-import type { ImageItem, ImagesResponse } from "./api";
-
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { API_URL, type ImageItem, type ImagesResponse } from "./api";
 
 export type AdminSession = {
   email: string;

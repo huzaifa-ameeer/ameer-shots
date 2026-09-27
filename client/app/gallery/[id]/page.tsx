@@ -5,6 +5,12 @@ import BackToGallery from "../../components/BackToGallery";
 import { fetchImageById } from "../../lib/api";
 
 /**
+ * Same reasoning as /gallery: the API may need waking up, so the route gets a
+ * generous execution budget.
+ */
+export const maxDuration = 60;
+
+/**
  * Single photograph page at /gallery/[id].
  *
  * Server Component: the id arrives in the URL, so the image is fetched and
