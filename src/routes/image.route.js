@@ -4,6 +4,7 @@ import {
   createImage,
   getImages,
   getImageById,
+  updateImage,
 } from "../controllers/image.controller.js";
 
 const router = Router();
@@ -21,6 +22,7 @@ const upload = multer({
 
 router.get("/", getImages);
 router.get("/:id", getImageById);
+router.patch("/:id", updateImage);
 router.post("/", upload.single("image"), createImage);
 
 router.use((err, req, res, next) => {

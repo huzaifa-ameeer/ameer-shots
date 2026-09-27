@@ -70,3 +70,45 @@ export async function getImageById(req, res) {
     return res.status(500).json({ error: "Failed to fetch image" });
   }
 }
+
+export async function updateImage(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ error: "Invalid image id" });
+    }
+
+    const { name, description } = req.body || {};
+    const updates = {};
+
+    if (name !== undefined) {
+      if (!name.trim()) {
+        return res.status(400).json({ error: "Name cannot be empty" });
+      }
+      updates.name = name.trim();
+    }
+
+    if (description !== undefined) {
+      updates.description = description.trim();
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: "Provide name or description" });
+    }
+
+    const image = await Image.findByIdAndUpdate(id, updates, {
+      new: true,
+      runValidators: true,
+    }).lean();
+
+    if (!image) {
+      return res.status(404).json({ error: "Image not found" });
+    }
+
+    return res.json(image);
+  } catch (error) {
+    console.error("Failed to update image:", error.message);
+    return res.status(500).json({ error: "Failed to update image" });
+  }
+}
